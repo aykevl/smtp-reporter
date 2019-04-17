@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>List of domains</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  </head>
+  <body style="max-width: 800px; margin: 0 auto; padding: 16px;">
+
+<h1>Report for {{.domain}}</h1>
+
+<p>This report summarizes the number of SMTP sessions that happened in the past week, grouped by sender.</p>
+
+{{range .result}}
+
+<h3>{{.OrganizationName}}</h3>
+<p>This is the result from {{.OrganizationName}} (<a href="https://{{.Domain}}/">{{.Domain}}</a>), which can be reached at <a href="mailto:{{.ContactInfo}}">{{.ContactInfo}}</a>.</p>
+<table class="table">
+  {{range $type, $stats := .Statistics}}
+  <tr>
+    <td>
+      {{if eq $type "no-policy-found"}}
+      <strong>No policy found</strong><br/>
+      {{else if eq $type "sts"}}
+      <strong>MTA-STS</strong>
+      {{else}}
+      <strong>{{$type}}</strong>
+      {{end}}
+    </td>
+    <td>
+      <div class="progress float-right" style="width: 100px">
+        {{if $stats.SuccessCount}}
+        <div class="progress-bar bg-success" role="progressbar" style="width: {{$stats.SuccessPercent}}%" aria-valuenow="{{$stats.SuccessCount}}" aria-valuemin="0" aria-valuemax="{{$stats.TotalCount}}">{{$stats.SuccessCount}}</div>
+        {{end}}
+        {{if $stats.FailureCount}}
+        <div class="progress-bar bg-danger" role="progressbar" style="width: {{$stats.FailurePercent}}%" aria-valuenow="{{$stats.FailureCount}}" aria-valuemin="0" aria-valuemax="{{$stats.TotalCount}}">{{$stats.FailureCount}}</div>
+        {{end}}
+
+      </div>
+    </td>
+  </tr>
+  {{end}}
+</table>
+{{end}}
+</body>
+</html>
