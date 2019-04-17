@@ -21,7 +21,7 @@ type ReadError struct {
 }
 
 func (e ReadError) Error() string {
-	if e.Error == nil {
+	if e.Err == nil {
 		return e.Op
 	}
 	return e.Op + ": " + e.Err.Error()
