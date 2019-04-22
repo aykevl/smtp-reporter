@@ -5,42 +5,90 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   </head>
+  <style>
+    dd {
+      margin-left: 1.5rem;
+    }
+  </style>
   <body style="max-width: 800px; margin: 0 auto; padding: 16px;">
 
 <h1>Report for {{.domain}}</h1>
 
 <p>This report summarizes the number of SMTP sessions that happened in the past week, grouped by sender.</p>
 
-{{range .result}}
+{{range $result := .result}}
 
 <h3>{{.OrganizationName}}</h3>
-<p>This is the result from {{.OrganizationName}} (<a href="https://{{.Domain}}/">{{.Domain}}</a>), which can be reached at <a href="mailto:{{.ContactInfo}}">{{.ContactInfo}}</a>.</p>
-<table class="table">
-  {{range $type, $stats := .Statistics}}
-  <tr>
-    <td>
-      {{if eq $type "no-policy-found"}}
-      <strong>No policy found</strong><br/>
-      {{else if eq $type "sts"}}
-      <strong>MTA-STS</strong>
-      {{else}}
-      <strong>{{$type}}</strong>
+<p>This is the summary of {{.NumReports}} reports from {{.OrganizationName}} (<a href="https://{{.Domain}}/">{{.Domain}}</a>), which can be reached at <a href="mailto:{{.ContactInfo}}">{{.ContactInfo}}</a>. Statistics have been collected over a period from {{.Start.Format "2006-01-02 15:04 MST"}} to {{.End.Format "2006-01-02 15:04 MST"}} and cover {{.TotalCount}} SMTP sessions.</p>
+<dl>
+  {{range $type, $_ := .Statistics}}
+  <dt>
+    {{if eq $type "no-policy-found"}}
+    No policy found
+    {{else if eq $type "sts"}}
+    MTA-STS
+    {{else}}
+    {{$type}}
+    {{end}}
+  </dt>
+  <dd>
+    <div class="progress float-right" style="width: 100px">
+      {{if .SuccessCount}}
+      <div class="progress-bar bg-success" role="progressbar" style="width: {{.SuccessPercent}}%" aria-valuenow="{{.SuccessCount}}" aria-valuemin="0" aria-valuemax="{{.TotalCount}}">{{.SuccessCount}}</div>
       {{end}}
-    </td>
-    <td>
-      <div class="progress float-right" style="width: 100px">
-        {{if $stats.SuccessCount}}
-        <div class="progress-bar bg-success" role="progressbar" style="width: {{$stats.SuccessPercent}}%" aria-valuenow="{{$stats.SuccessCount}}" aria-valuemin="0" aria-valuemax="{{$stats.TotalCount}}">{{$stats.SuccessCount}}</div>
-        {{end}}
-        {{if $stats.FailureCount}}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: {{$stats.FailurePercent}}%" aria-valuenow="{{$stats.FailureCount}}" aria-valuemin="0" aria-valuemax="{{$stats.TotalCount}}">{{$stats.FailureCount}}</div>
-        {{end}}
+      {{if .FailureCount}}
+      <div class="progress-bar bg-danger" role="progressbar" style="width: {{.FailurePercent}}%" aria-valuenow="{{.FailureCount}}" aria-valuemin="0" aria-valuemax="{{.TotalCount}}">{{.FailureCount}}</div>
+      {{end}}
 
-      </div>
-    </td>
-  </tr>
+    </div>
+    {{if eq $type "no-policy-found"}}
+      <p>
+        No policy has been found for this session.
+        {{if eq $result.Domain "google.com"}}
+          <br/>
+          Google sends out reports once a day, and appears to include this session (which ignores all policies per <a href="https://tools.ietf.org/html/rfc8460#section-5.3.1">RFC8460</a>) in the report. Thus, you should expect to see a "no policy found" report for every report email sent.
+        {{end}}
+      </p>
+    {{else if eq $type "sts"}}
+      <p>
+        {{if eq .FailureCount 0}}
+          There have been {{.SuccessCount}} successful SMTP sessions and no failures. MTA-STS appears to be working well for your domain.
+        {{else}}
+          {{if eq .SuccessCount 0}}
+            All {{.FailureCount}} SMTP sessions failed.
+          {{else}}
+            Only {{.SuccessPercent}}% of your SMTP sessions ({{.SuccessCount}} of {{.TotalCount}}) were successful.
+          {{end}}
+          <br/>
+        {{end}}
+      </p>
+    {{end}}
+    {{if .FailureCount}}
+      {{if eq .FailureCount 1}}
+      This was the specific failure:
+      {{else}}
+      These were the specific failures:
+      {{end}}
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Reason</th>
+            <th>Failed sessions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $reason, $_ := .FailureCountReasons}}
+            <tr>
+              <td>{{$reason}}</td>
+              <td>{{.}}</td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    {{end}}
+  </dd>
   {{end}}
-</table>
+</dl>
 {{end}}
 </body>
 </html>

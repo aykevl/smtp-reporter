@@ -25,7 +25,18 @@ type SubmitterResult struct {
 	Domain           string
 	OrganizationName string
 	ContactInfo      string
+	NumReports       int
+	Start            time.Time
+	End              time.Time
 	Statistics       map[string]*Statistics
+}
+
+func (r *SubmitterResult) TotalCount() int {
+	sum := 0
+	for _, s := range r.Statistics {
+		sum += s.TotalCount()
+	}
+	return sum
 }
 
 type Statistics struct {
@@ -72,7 +83,7 @@ func update(dir, dkimIdentifier string) {
 		path := filepath.Join(dir, fileInfo.Name())
 		message, err := readMessage(path, dkimIdentifier)
 		if err != nil {
-			log.Println(err)
+			log.Println("failed to read message:", err)
 			continue
 		}
 		if message.DateRange.End.Before(now.Add(-time.Hour * 24 * 7)) {
@@ -85,9 +96,16 @@ func update(dir, dkimIdentifier string) {
 			newPerformancePerDomain[message.Domain][message.Submitter] = &SubmitterResult{}
 		}
 		sr := newPerformancePerDomain[message.Domain][message.Submitter]
-		sr.Domain = message.Submitter
-		sr.OrganizationName = message.OrganizationName
-		sr.ContactInfo = message.ContactInfo
+		sr.NumReports++
+		if sr.Start.IsZero() || sr.Start.After(message.DateRange.Start) {
+			sr.Start = message.DateRange.Start
+		}
+		if sr.End.IsZero() || sr.End.Before(message.DateRange.End) {
+			sr.End = message.DateRange.End
+			sr.Domain = message.Submitter
+			sr.OrganizationName = message.OrganizationName
+			sr.ContactInfo = message.ContactInfo
+		}
 		for _, policy := range message.Policies {
 			if sr.Statistics == nil {
 				sr.Statistics = make(map[string]*Statistics)
