@@ -7,7 +7,15 @@
   </head>
   <body style="max-width: 800px; margin: 0 auto; padding: 16px;">
 
-<h1>Performance per domain</h1>
+<h1>SMTP TLS Reporting</h1>
+
+<p>This page collects <a href="https://www.hardenize.com/blog/smtp-tls-reporting-tls-rpt">SMTP TLS Reports</a> (<a href="https://tools.ietf.org/html/rfc8460">RFC8460</a>) sent to smtp-tlsrpt@aykevl.nl. You can configure your own mail server to do the same by setting the <code>rua</code> field in your SMTP-TLSRPT DNS record to <code>mailto:smtp-tlsrpt@aykevl.nl</code>, for example:</p>
+
+<pre>
+_smtp._tls.aykevl.nl.  59  IN  TXT  "v=TLSRPTv1;rua=mailto:smtp-tlsrpt@aykevl.nl"
+</pre>
+
+<p>If you do this, some information about SMTP traffic to your domain will be publicly available and will be stored locally for up to 7 days. If you want to stop this, update the TXT record above to not include <code>mailto:smtp-tlsrpt@aykevl.nl</code>, which will remove all information from this server in about 8 days (depending on the speed of DNS propagation). <a href="https://aykevl.nl/about">Contact me</a> if you want to have this information removed more quickly or you have other questions about this service.</p>
 
 <p>The following domains are currently tracked:</p>
 
@@ -16,6 +24,8 @@
     <li><a href="{{$domain}}">{{$domain}}</a></li>
   {{end}}
 </ul>
+
+<p>You can also check whether your mail host <a href="https://aykevl.nl/apps/mta-sts/">complies with MTA-STS</a> or just check for <a href="https://www.hardenize.com/">all possible security-related standards</a>.</p>
 
 </body>
 </html>
