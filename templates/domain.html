@@ -44,7 +44,11 @@
     </div>
     {{if eq $type "no-policy-found"}}
       <p>
-        No policy has been found for this session.
+        {{if .FailureCount}}
+          No policy has been found for {{.TotalCount}} SMTP sessions, of which {{.FailureCount}} failed.
+        {{else}}
+          No policy has been found for {{.TotalCount}} SMTP sessions, all of which were successful.
+        {{end}}
         {{if eq $result.Domain "google.com"}}
           <br/>
           Google sends out reports once a day, and appears to include this session (which ignores all policies per <a href="https://tools.ietf.org/html/rfc8460#section-5.3.1">RFC8460</a>) in the report. Thus, you should expect to see a "no policy found" report for every report email sent.
@@ -52,15 +56,14 @@
       </p>
     {{else if eq $type "sts"}}
       <p>
-        {{if eq .FailureCount 0}}
-          There have been {{.SuccessCount}} successful SMTP sessions and no failures. MTA-STS appears to be working well for your domain.
-        {{else}}
-          {{if eq .SuccessCount 0}}
-            All {{.FailureCount}} SMTP sessions failed.
-          {{else}}
+        {{if .FailureCount}}
+          {{if .SuccessCount}}
             Only {{.SuccessPercent}}% of your SMTP sessions ({{.SuccessCount}} of {{.TotalCount}}) were successful.
+          {{else}}
+            All {{.FailureCount}} SMTP sessions failed.
           {{end}}
-          <br/>
+        {{else}}
+          There have been {{.SuccessCount}} successful SMTP sessions and no failures. MTA-STS appears to be working well for your domain.
         {{end}}
       </p>
     {{end}}
