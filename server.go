@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -12,12 +14,16 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 	p := performancePerDomain
 	performancePerDomainLock.Unlock()
 
+	// Get source path
+	_, path, _, _ := runtime.Caller(0)
+	root := filepath.Dir(path)
+
 	if r.URL.Path[len(r.URL.Path)-1] == '/' {
-		var tpl = template.Must(template.ParseFiles("templates/index.html"))
+		var tpl = template.Must(template.ParseFiles(filepath.Join(root, "templates", "index.html")))
 		tpl.Execute(w, p)
 	} else {
 		domain := r.URL.Path[strings.LastIndexByte(r.URL.Path, '/')+1:]
-		var tpl = template.Must(template.ParseFiles("templates/domain.html"))
+		var tpl = template.Must(template.ParseFiles(filepath.Join(root, "templates", "domain.html")))
 		if result, ok := performancePerDomain[domain]; ok {
 			err := tpl.Execute(w, map[string]interface{}{
 				"domain": domain,
