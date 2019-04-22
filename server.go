@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -18,10 +19,13 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 		domain := r.URL.Path[strings.LastIndexByte(r.URL.Path, '/')+1:]
 		var tpl = template.Must(template.ParseFiles("templates/domain.html"))
 		if result, ok := performancePerDomain[domain]; ok {
-			tpl.Execute(w, map[string]interface{}{
+			err := tpl.Execute(w, map[string]interface{}{
 				"domain": domain,
 				"result": result,
 			})
+			if err != nil {
+				log.Println("failed to send response:", err)
+			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			w.Header().Set("Content-Type", "text/plain")
