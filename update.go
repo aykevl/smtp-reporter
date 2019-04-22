@@ -79,7 +79,6 @@ func update(dir, dkimIdentifier string) {
 		if !fileInfo.Mode().IsRegular() {
 			continue
 		}
-		// TODO: remove file if it is too old
 		path := filepath.Join(dir, fileInfo.Name())
 		message, err := readMessage(path, dkimIdentifier)
 		if err != nil {
@@ -87,6 +86,12 @@ func update(dir, dkimIdentifier string) {
 			continue
 		}
 		if message.DateRange.End.Before(now.Add(-time.Hour * 24 * 7)) {
+			err := os.Remove(path)
+			if err != nil {
+				log.Printf("failed to remove %s: %s", path, err)
+			} else {
+				log.Printf("removed: %s", path)
+			}
 			continue
 		}
 		if _, ok := newPerformancePerDomain[message.Domain]; !ok {
